@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHADB — Shell ADB & System Administrator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: '#0B0B0D',
+          panel: '#15151A',
+          line: '#27272D',
+          gold: '#D9A95B',
+          goldsoft: '#E7C58C',
+          mist: '#9C9BA3',
+          paper: '#F2EFE9',
+          okgreen: '#6FBF8A',
+        },
+        fontFamily: {
+          mono: ['IBM Plex Mono', 'ui-monospace', 'monospace'],
+          sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { background-color: #0B0B0D; }
+  .noise {
+    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.035) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+  .caret {
+    display: inline-block;
+    width: 9px;
+    height: 1.05em;
+    background: #D9A95B;
+    margin-left: 2px;
+    vertical-align: -0.15em;
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .prompt-line { white-space: pre-wrap; }
+  .phone-frame {
+    border: 8px solid #1d1d22;
+    border-radius: 2.4rem;
+    box-shadow: 0 0 0 1px rgba(217,169,91,0.15), 0 30px 60px -20px rgba(0,0,0,0.7);
+  }
+  .divider-dot { background-image: linear-gradient(to right, #27272D 60%, transparent 0%); background-size: 6px 1px; background-repeat: repeat-x; height: 1px; }
+  .skeu { background: linear-gradient(180deg, #18181D 0%, #121216 100%); }
+  ::selection { background: #D9A95B; color: #0B0B0D; }
+  @media (prefers-reduced-motion: reduce) {
+    .caret { animation: none; opacity: 1; }
+    * { scroll-behavior: auto !important; }
+  }
+  .focus-ring:focus-visible { outline: 2px solid #D9A95B; outline-offset: 3px; }
+</style>
+</head>
+<body class="bg-ink text-paper font-sans antialiased">
+
+  <!-- NAV -->
+  <header class="fixed top-0 inset-x-0 z-50 backdrop-blur bg-ink/80 border-b border-line">
+    <div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2 font-mono">
+        <span class="text-gold text-lg font-semibold tracking-tight">SHADB</span>
+        <span class="text-mist text-xs">/ shell adb &amp; system administrator</span>
+      </div>
+      <a href="#install" class="focus-ring text-xs font-mono border border-line hover:border-gold/60 text-paper px-3 py-1.5 rounded-md transition-colors">
+        $ install
+      </a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="noise pt-32 pb-20 px-6 border-b border-line">
+    <div class="max-w-5xl mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center">
+      <div>
+        <p class="font-mono text-xs text-gold uppercase tracking-[0.2em] mb-5">non-root · shizuku</p>
+        <h1 class="font-mono text-4xl sm:text-5xl font-semibold leading-[1.08] tracking-tight mb-6">
+          Kontrol penuh<br>sistem Android-mu.<br><span class="text-mist">Tanpa root.</span>
+        </h1>
+        <p class="text-mist text-base sm:text-lg leading-relaxed max-w-md mb-8">
+          SHADB membuka akses tingkat sistem lewat Shizuku — bekukan aplikasi, bersihkan bloatware, atur izin, dan kelola file, semua dari satu konsol. Aman, efisien, tanpa iklan.
+        </p>
+        <div class="flex items-center gap-4">
+          <a href="#install" class="focus-ring bg-gold hover:bg-goldsoft text-ink font-mono text-sm font-semibold px-5 py-3 rounded-lg transition-colors">
+            Unduh SHADB
+          </a>
+          <a href="#tools" class="focus-ring font-mono text-sm text-mist hover:text-paper transition-colors">lihat fitur →</a>
+        </div>
+      </div>
+
+      <!-- terminal signature -->
+      <div class="panel rounded-2xl border border-line bg-panel overflow-hidden">
+        <div class="flex items-center gap-2 px-4 py-3 border-b border-line">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#444]"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-[#444]"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-[#444]"></span>
+          <span class="ml-3 text-xs font-mono text-mist">shadb — terminal</span>
+        </div>
+        <div id="termBody" class="p-5 font-mono text-[13px] leading-relaxed h-72 sm:h-80 overflow-hidden">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATUS STRIP -->
+  <section class="border-b border-line bg-panel/40">
+    <div class="max-w-5xl mx-auto px-6 py-5 flex flex-wrap gap-x-10 gap-y-2 font-mono text-xs text-mist">
+      <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-okgreen"></span>Layanan Shizuku aktif &amp; terhubung</span>
+      <span>UID: 2000</span>
+      <span>Versi 1.3 Stable</span>
+      <span>Zero ads · Zero tracking</span>
+    </div>
+  </section>
+
+  <!-- TOOLS -->
+  <section id="tools" class="px-6 py-20 border-b border-line">
+    <div class="max-w-5xl mx-auto">
+      <div class="flex items-baseline justify-between mb-10">
+        <h2 class="font-mono text-2xl font-semibold tracking-tight">Administrator Tools</h2>
+        <span class="font-mono text-xs text-mist"></span>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-px bg-line border border-line rounded-xl overflow-hidden">
+
+        <div class="bg-ink p-6 hover:bg-panel transition-colors">
+          <p class="font-mono text-gold text-xs mb-2">$ package-manager</p>
+          <h3 class="font-semibold mb-1.5">Package Manager</h3>
+          <p class="text-mist text-sm leading-relaxed">Bekukan, nonaktifkan, copot, backup, dan pasang APK / split APK. Kelola izin aplikasi sistem maupun pengguna.</p>
+        </div>
+
+        <div class="bg-ink p-6 hover:bg-panel transition-colors">
+          <p class="font-mono text-gold text-xs mb-2">$ debloater --auto</p>
+          <h3 class="font-semibold mb-1.5">Automated Brand Debloater</h3>
+          <p class="text-mist text-sm leading-relaxed">Bersihkan bloatware bawaan merk secara otomatis — Samsung, Xiaomi, Oppo, Vivo, Realme, dan lainnya.</p>
+        </div>
+
+        <div class="bg-ink p-6 hover:bg-panel transition-colors">
+          <p class="font-mono text-gold text-xs mb-2">$ settings-manager</p>
+          <h3 class="font-semibold mb-1.5">Settings Manager</h3>
+          <p class="text-mist text-sm leading-relaxed">Atur skala animasi, durasi screen timeout, dan densitas layar (DPI) secara langsung.</p>
+        </div>
+
+        <div class="bg-ink p-6 hover:bg-panel transition-colors">
+          <p class="font-mono text-gold text-xs mb-2">$ perf-booster</p>
+          <h3 class="font-semibold mb-1.5">Performance Booster</h3>
+          <p class="text-mist text-sm leading-relaxed">Tingkatkan respons sistem, fstrim storage, kelola refresh rate, dan hemat daya.</p>
+        </div>
+
+        <div class="bg-ink p-6 hover:bg-panel transition-colors">
+          <p class="font-mono text-gold text-xs mb-2">$ appops --manage</p>
+          <h3 class="font-semibold mb-1.5">AppOps Manager</h3>
+          <p class="text-mist text-sm leading-relaxed">Setel izin khusus seperti Notification Access, Overlay, dan Accessibility untuk setiap aplikasi.</p>
+        </div>
+
+        <div class="bg-ink p-6 hover:bg-panel transition-colors">
+          <p class="font-mono text-gold text-xs mb-2">$ file-explorer</p>
+          <h3 class="font-semibold mb-1.5">File Explorer</h3>
+          <p class="text-mist text-sm leading-relaxed">Navigasi sandbox aplikasi &amp; shared storage. Buat folder, salin, dan kompres ke ZIP.</p>
+        </div>
+
+        <div class="bg-ink p-6 hover:bg-panel transition-colors sm:col-span-2">
+          <p class="font-mono text-gold text-xs mb-2">$ apk-analyzer · automation-engine</p>
+          <h3 class="font-semibold mb-1.5">APK Analyzer &amp; Automation Engine</h3>
+          <p class="text-mist text-sm leading-relaxed">Bedah file APK untuk melihat signature, hash, aktivitas, dan izin — lalu picu shell script kustom otomatis saat boot, saat cas, atau saat Wi-Fi berubah.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- PREVIEW -->
+  <section class="px-6 py-20 border-b border-line">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="font-mono text-2xl font-semibold tracking-tight mb-2">Tampilan Aplikasi</h2>
+      <p class="text-mist text-sm mb-10 max-w-md">Antarmuka gelap, ringkas, dan langsung pada intinya —.</p>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-5">
+        <figure>
+          <div class="phone-frame overflow-hidden"><img src="img/shot-home.jpg" alt="Beranda SHADB menampilkan status layanan Shizuku" class="w-full block"></div>
+          <figcaption class="font-mono text-xs text-mist text-center mt-3">Home</figcaption>
+        </figure>
+        <figure>
+          <div class="phone-frame overflow-hidden"><img src="img/shot-tools.jpg" alt="Daftar Administrator Tools di SHADB" class="w-full block"></div>
+          <figcaption class="font-mono text-xs text-mist text-center mt-3">Tools</figcaption>
+        </figure>
+        <figure>
+          <div class="phone-frame overflow-hidden"><img src="img/shot-terminal.jpg" alt="Terminal shell di SHADB" class="w-full block"></div>
+          <figcaption class="font-mono text-xs text-mist text-center mt-3">Terminal</figcaption>
+        </figure>
+        <figure>
+          <div class="phone-frame overflow-hidden"><img src="img/shot-settings.jpg" alt="Halaman pengaturan tema SHADB" class="w-full block"></div>
+          <figcaption class="font-mono text-xs text-mist text-center mt-3">Settings</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSTALL -->
+  <section id="install" class="px-6 py-24">
+    <div class="max-w-5xl mx-auto">
+      <div class="skeu border border-line rounded-2xl p-10 sm:p-14 text-center">
+        <p class="font-mono text-xs text-gold uppercase tracking-[0.2em] mb-4">siap dipasang</p>
+        <h2 class="font-mono text-2xl sm:text-3xl font-semibold tracking-tight mb-4">Pasang SHADB sekarang</h2>
+        <p class="text-mist text-sm sm:text-base max-w-md mx-auto mb-8 leading-relaxed">
+          Butuh Shizuku aktif. Tidak perlu root, tidak ada iklan.
+        </p>
+        <!-- Ganti href="#" dengan URL unduhan kamu -->
+        <a href="https://drive.google.com/drive/folders/1eJ5carDNNpmC2EHkZ6AcTcLu2jo2pg2a?usp=sharing" id="downloadBtn"
+           class="focus-ring inline-flex items-center gap-2 bg-gold hover:bg-goldsoft text-ink font-mono text-sm font-semibold px-6 py-3.5 rounded-lg transition-colors">
+          ⤓ Unduh APK
+        </a>
+        <p class="font-mono text-[11px] text-mist mt-4">Android 10+ · Non-root · ~ a few MB</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="border-t border-line px-6 py-8">
+    <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3 font-mono text-xs text-mist">
+      <span>SHADB — Shell ADB &amp; System Administrator</span>
+      <span>Dibuat untuk pengguna Android yang ingin kontrol penuh.</span>
+    </div>
+  </footer>
+
+  <script>
+    const lines = [
+      { p: '~ $ ', c: 'shadb --status', d: 30 },
+      { o: 'Shizuku: connected (UID 2000)\nMode: non-root\n' },
+      { p: '~ $ ', c: 'pm list packages --bloat', d: 30 },
+      { o: '12 bloatware packages found\nDebloater siap dijalankan\n' },
+      { p: '~ $ ', c: 'shadb tools', d: 30 },
+      { o: 'package-manager · debloater\nsettings-manager · appops\nfile-explorer · apk-analyzer\n' },
+      { p: '~ $ ', c: 'echo $WELCOME', d: 30 },
+      { o: 'Selamat datang di SHADB.\n' },
+    ];
+
+    const term = document.getElementById('termBody');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function renderStatic() {
+      term.innerHTML = lines.map(l => {
+        if (l.c) return `<div class="prompt-line"><span class="text-gold">${l.p}</span><span class="text-paper">${l.c}</span></div>`;
+        return `<div class="prompt-line text-mist">${l.o}</div>`;
+      }).join('');
+    }
+
+    async function typeSequence() {
+      for (const l of lines) {
+        if (l.c) {
+          const row = document.createElement('div');
+          row.className = 'prompt-line';
+          const prompt = document.createElement('span');
+          prompt.className = 'text-gold';
+          prompt.textContent = l.p;
+          const cmd = document.createElement('span');
+          cmd.className = 'text-paper';
+          row.appendChild(prompt);
+          row.appendChild(cmd);
+          term.appendChild(row);
+          for (const ch of l.c) {
+            cmd.textContent += ch;
+            await new Promise(r => setTimeout(r, l.d));
+          }
+          await new Promise(r => setTimeout(r, 200));
+        } else if (l.o) {
+          const row = document.createElement('div');
+          row.className = 'prompt-line text-mist';
+          row.textContent = l.o;
+          term.appendChild(row);
+          await new Promise(r => setTimeout(r, 350));
+        }
+      }
+      const caretRow = document.createElement('div');
+      caretRow.innerHTML = '<span class="text-gold">~ $ </span><span class="caret"></span>';
+      term.appendChild(caretRow);
+    }
+
+    if (reduced) {
+      renderStatic();
+    } else {
+      typeSequence();
+    }
+  </script>
+</body>
+</html>
