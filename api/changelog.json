@@ -6,7 +6,7 @@
   "releases": [
     {
       "version": "1.5",
-      "version_code": 5,
+      "version_code": 6,
       "release_date": "2026-06-30",
       "status": "stable",
       "title": "Stable Release",
