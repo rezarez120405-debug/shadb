@@ -5,6 +5,16 @@
   "current_version": "1.3",
   "releases": [
     {
+      "version": "1.5",
+      "version_code": 5,
+      "release_date": "2026-06-30",
+      "status": "stable",
+      "title": "Stable Release",
+      "changes": [
+        "Penambahan fitur update OTA"
+      ]
+    },
+    {
       "version": "1.3",
       "version_code": 5,
       "release_date": "2026-06-29",
